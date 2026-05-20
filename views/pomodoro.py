@@ -5,7 +5,8 @@ from theme.paleta import criar_card
 def view_pomodoro(p, estado, page):
     """
     View do Timer Pomodoro.
-    Ciclo padrão: 25 min foco → 5 min pausa curta → a cada 4 ciclos, 15 min pausa longa.
+    Ciclo de foco: duração definida pelo slider da view de Tarefas (padrão 25min).
+    Ciclo padrão: foco → 5 min pausa curta → a cada 4 ciclos, 15 min pausa longa.
 
     Parâmetros:
         p      — dicionário de cores da paleta ativa
@@ -19,10 +20,16 @@ def view_pomodoro(p, estado, page):
         ciclos             — quantos ciclos de foco foram concluídos
     """
 
+    # Lê a duração de foco definida pelo slider de tarefas (padrão 25min)
+    # O slider vai de 0–100; a conversão é max(5, valor/2) → 5 a 50 minutos
+    slider_val    = estado.get("campos_slider_foco_value", 50)
+    minutos_foco  = max(5, int(slider_val / 2))
+
     # Inicializa o sub-estado do pomodoro apenas na primeira vez que a view é carregada
+    # Se já existir (usuário voltou para a tela), preserva o estado atual
     if "pomodoro" not in estado:
         estado["pomodoro"] = {
-            "segundos_restantes": 25 * 60,
+            "segundos_restantes": minutos_foco * 60,
             "rodando":            False,
             "modo":               "foco",
             "ciclos":             0,
@@ -31,9 +38,11 @@ def view_pomodoro(p, estado, page):
     # Atalho para o sub-estado (referência, não cópia)
     pm = estado["pomodoro"]
 
-    # Durações fixas em segundos para cada modo do pomodoro
+    # Durações em segundos — foco lê do estado para refletir o slider
     DURAÇÕES = {
-        "foco":        25 * 60,
+        "foco":        pm["segundos_restantes"]
+                       if pm["modo"] == "foco"
+                       else minutos_foco * 60,
         "pausa_curta":  5 * 60,
         "pausa_longa": 15 * 60,
     }
@@ -73,6 +82,13 @@ def view_pomodoro(p, estado, page):
     texto_ciclos = ft.Text(
         f"Ciclos concluídos: {pm['ciclos']}",
         size=14,
+        color=p["subtext"],
+    )
+
+    # Informa ao usuário qual duração de foco está configurada pelo slider
+    texto_config = ft.Text(
+        f"Duração do foco: {minutos_foco} min (ajuste pelo slider em Tarefas)",
+        size=11,
         color=p["subtext"],
     )
 
@@ -163,10 +179,11 @@ def view_pomodoro(p, estado, page):
     def trocar_modo(modo):
         """
         Troca manualmente para o modo informado, parando o timer atual.
-        Usado pelos botões de seleção rápida de modo.
+        Para o modo foco, usa a duração configurada pelo slider de tarefas.
         """
         pm["rodando"]            = False
         pm["modo"]               = modo
+        # Foco usa duração do slider; pausas usam valores fixos
         pm["segundos_restantes"] = DURAÇÕES[modo]
         texto_tempo.value        = formatar_tempo(pm["segundos_restantes"])
         texto_modo.value         = LABELS_MODO[modo]
@@ -211,6 +228,7 @@ def view_pomodoro(p, estado, page):
         padding=20,
         spacing=20,
         controls=[
+            ft.Text("⏱️ Pomodoro", size=28, weight=ft.FontWeight.BOLD, color=p["text"]),
             ft.Text("Mantenha o foco com ciclos de estudo e pausa.", color=p["subtext"]),
 
             # Card principal com o timer, botões de controle e seleção de modo
@@ -218,19 +236,20 @@ def view_pomodoro(p, estado, page):
                 "Timer",
                 ft.Column(
                     [
-                        texto_modo,    # Label do modo atual (foco/pausa)
+                        texto_modo,     # Label do modo atual (foco/pausa)
                         ft.Container(
                             content=texto_tempo,           # Display MM:SS centralizado
                             alignment=ft.Alignment.CENTER,
                         ),
-                        texto_ciclos,  # Contador de ciclos concluídos
+                        texto_ciclos,   # Contador de ciclos concluídos
+                        texto_config,   # Informa duração configurada pelo slider
                         ft.Row(
                             [btn_iniciar, btn_reiniciar],  # Controles principais
                             alignment=ft.MainAxisAlignment.CENTER,
                             spacing=15,
                         ),
                         ft.Divider(),
-                        botoes_modo,   # Seleção rápida de modo
+                        botoes_modo,    # Seleção rápida de modo
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=15,
@@ -243,10 +262,10 @@ def view_pomodoro(p, estado, page):
                 "Como funciona",
                 ft.Column(
                     [
-                        ft.Text("① Estude por 25 minutos sem interrupções.",    color=p["text"]),
-                        ft.Text("② Descanse 5 minutos.",                        color=p["text"]),
-                        ft.Text("③ A cada 4 ciclos, faça uma pausa de 15 min.", color=p["text"]),
-                        ft.Text("④ Repita e acompanhe seus ciclos.",             color=p["text"]),
+                        ft.Text("① Estude pelo tempo configurado no slider sem interrupções.", color=p["text"]),
+                        ft.Text("② Descanse 5 minutos.",                                      color=p["text"]),
+                        ft.Text("③ A cada 4 ciclos, faça uma pausa de 15 min.",               color=p["text"]),
+                        ft.Text("④ Ajuste a duração do foco pelo slider na tela de Tarefas.", color=p["text"]),
                     ],
                     spacing=8,
                 ),

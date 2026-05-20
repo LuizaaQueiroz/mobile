@@ -178,6 +178,7 @@ def main(page: ft.Page):
             "concluir_tarefa":  concluir_tarefa,
             "remover_tarefa":   remover_tarefa,
             "limpar_tarefas":   limpar_tarefas,
+             "mostrar_snack":    mostrar_snack,
         }
 
         # Mapa de rotas: cada entrada é uma lambda que constrói a view sob demanda
