@@ -1,11 +1,15 @@
 import flet as ft
 from theme.paleta        import paleta
+from components.header   import header
 from components.menu     import menu_lateral
 from views.home          import view_home
 from views.tarefas       import view_tarefas
+from views.pomodoro      import view_pomodoro
+from views.anotacoes     import view_anotacoes
+from views.cronograma    import view_cronograma
 from views.config        import view_config
 from views.sobre         import view_sobre
-
+from views.usuario       import view_usuario
 
 def main(page: ft.Page):
 
@@ -21,13 +25,15 @@ def main(page: ft.Page):
 
     # ==========================================================================
     # ESTADO GLOBAL
-    # Dicionário único que centraliza tudo que muda durante o uso do app
+    # Dicionário único que centraliza tudo que muda durante o uso do app.
+    # Cada view com estado próprio adiciona sua chave aqui sob demanda.
     # ==========================================================================
     estado = {
         "dark":    False,   # Tema atual (False = claro, True = escuro)
         "rota":    "/",     # Rota ativa, usada para destacar o menu e renderizar a view correta
         "mobile":  False,   # Reservado para futura adaptação de layout mobile
         "tarefas": [],      # Lista de dicts: {"nome", "prioridade", "feito"}
+        # "pomodoro", "anotacoes" e "cronograma" são inicializados nas próprias views
     }
 
     # ==========================================================================
@@ -111,14 +117,14 @@ def main(page: ft.Page):
         campo_tarefa.value = ""
         atualizar_progresso()
         mostrar_snack("Tarefa adicionada!", ft.Colors.GREEN)
-        route_change()  # Re-renderiza para exibir a nova tarefa
+        route_change()
 
     def concluir_tarefa(index):
         # Alterna o estado feito/pendente da tarefa no índice recebido
         estado["tarefas"][index]["feito"] = not estado["tarefas"][index]["feito"]
         atualizar_progresso()
         route_change()
-    
+
     def remover_tarefa(index):
         # Remove a tarefa do índice especificado e re-renderiza
         estado["tarefas"].pop(index)
@@ -170,30 +176,40 @@ def main(page: ft.Page):
         callbacks = {
             "adicionar_tarefa": adicionar_tarefa,
             "concluir_tarefa":  concluir_tarefa,
+            "remover_tarefa":   remover_tarefa,
             "limpar_tarefas":   limpar_tarefas,
-            "remover_tarefa":   remover_tarefa,   
-        
         }
 
         # Mapa de rotas: cada entrada é uma lambda que constrói a view sob demanda
         views = {
-            "/":        lambda: view_home(p, estado, progress),
-            "/tarefas": lambda: view_tarefas(p, estado, campos, callbacks),
-            "/config":  lambda: view_config(p, estado, trocar_tema),
-            "/sobre":   lambda: view_sobre(p),
+            "/":           lambda: view_home(p, estado, progress),
+            "/tarefas":    lambda: view_tarefas(p, estado, campos, callbacks),
+            "/pomodoro":   lambda: view_pomodoro(p, estado, page),
+            "/anotacoes":  lambda: view_anotacoes(p, estado, page),
+            "/cronograma": lambda: view_cronograma(p, estado, page),
+            "/usuario":    lambda: view_usuario(p, estado, page),
+            "/config":     lambda: view_config(p, estado, trocar_tema),
+            "/sobre":      lambda: view_sobre(p),
         }
 
         # Resolve a view da rota ativa, com fallback para home
         conteudo = views.get(estado["rota"], views["/"])()
 
-        # Reconstrói a página: menu lateral + divisor + conteúdo da rota
+        # Reconstrói a página: menu lateral + header + conteúdo da rota
         page.controls.clear()
         page.add(
             ft.Row(
                 [
                     menu_lateral(p, estado, navegar),
                     ft.VerticalDivider(width=1),
-                    conteudo,
+                    ft.Column(
+                        [
+                            header(p, estado, mostrar_snack, trocar_tema),
+                            conteudo,
+                        ],
+                        expand=True,
+                        spacing=0,
+                    ),
                 ],
                 expand=True,
             )

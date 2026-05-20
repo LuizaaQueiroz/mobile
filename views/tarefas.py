@@ -76,7 +76,6 @@ def view_tarefas(p, estado, campos, callbacks):
         padding=20,
         spacing=20,
         controls=[
-            ft.Text("✅ Tarefas", size=28, weight=ft.FontWeight.BOLD, color=p["text"]),
 
             # Card superior: formulário para adicionar nova tarefa
             criar_card(
