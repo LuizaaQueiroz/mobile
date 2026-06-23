@@ -29,7 +29,7 @@ def view_home(p, estado, progress):
     pct        = int(progress.value * 100)  # Converte 0.0–1.0 para 0–100
 
     # Extrai o primeiro nome do usuário logado, com fallback para "Visitante"
-    u          = estado.get("usuario", {})
+    u          = estado.get("usuario") or {}
     nome       = u.get("nome", "") or "Visitante"
     nome_curto = nome.split()[0]
 

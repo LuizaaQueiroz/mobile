@@ -80,7 +80,7 @@ def menu_lateral(p, estado, navegar):
     # ==========================================================================
 
     # Lê os dados do usuário do estado, com fallback para "Visitante"
-    u       = estado.get("usuario", {})
+    u       = estado.get("usuario") or {}
     nome    = u.get("nome", "") or "Visitante"
     email   = u.get("email", "")
     inicial = nome[0].upper()   # Primeira letra do nome para o avatar
