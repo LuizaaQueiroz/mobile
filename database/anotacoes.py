@@ -43,6 +43,18 @@ def listar(usuario_id: int) -> list[dict]:
         conn.close()
 
 
+def atualizar(anotacao_id: int, materia: str, titulo: str, conteudo: str) -> None:
+    conn = get_conn()
+    try:
+        conn.execute(
+            "UPDATE anotacoes SET materia = ?, titulo = ?, conteudo = ? WHERE id = ?",
+            (materia.strip(), titulo.strip(), conteudo.strip(), anotacao_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def excluir(anotacao_id: int) -> None:
     conn = get_conn()
     try:

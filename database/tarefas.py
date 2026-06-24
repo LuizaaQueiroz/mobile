@@ -51,6 +51,18 @@ def listar(usuario_id: int, filtro: str = "Todas") -> list[dict]:
         conn.close()
 
 
+def atualizar(tarefa_id: int, nome: str, prioridade: str) -> None:
+    conn = get_conn()
+    try:
+        conn.execute(
+            "UPDATE tarefas SET nome = ?, prioridade = ? WHERE id = ?",
+            (nome.strip(), prioridade, tarefa_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def concluir(tarefa_id: int, valor: bool) -> None:
     conn = get_conn()
     try:
